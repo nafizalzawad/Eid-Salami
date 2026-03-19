@@ -84,6 +84,26 @@ const EidiCard = forwardRef<EidiCardHandle, EidiCardProps>(({ amount, message, s
     ctx.font = '80px serif';
     ctx.textAlign = 'center';
     ctx.fillText(theme.emoji, w / 2, 130);
+    
+    // Message wrapping utility
+    const wrapText = (text: string, x: number, y: number, maxWidth: number, lineHeight: number) => {
+      const words = text.split(' ');
+      let line = '';
+      for (let n = 0; n < words.length; n++) {
+        const testLine = line + words[n] + ' ';
+        const metrics = ctx.measureText(testLine);
+        const testWidth = metrics.width;
+        if (testWidth > maxWidth && n > 0) {
+          ctx.fillText(line.trim(), x, y);
+          line = words[n] + ' ';
+          y += lineHeight;
+        } else {
+          line = testLine;
+        }
+      }
+      ctx.fillText(line.trim(), x, y);
+      return y;
+    };
 
     // "Eid Mubarak" title
     ctx.fillStyle = theme.accentColor;
@@ -93,68 +113,53 @@ const EidiCard = forwardRef<EidiCardHandle, EidiCardProps>(({ amount, message, s
 
     // Decorative line
     ctx.strokeStyle = theme.accentColor;
-    ctx.globalAlpha = 0.5;
+    ctx.globalAlpha = 0.3;
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(w / 2 - 120, 230);
-    ctx.lineTo(w / 2 + 120, 230);
+    ctx.moveTo(w / 2 - 140, 235);
+    ctx.lineTo(w / 2 + 140, 235);
     ctx.stroke();
-    ctx.globalAlpha = 1;
 
     // From sender
-    ctx.fillStyle = theme.textColor;
     ctx.globalAlpha = 0.8;
-    ctx.font = `24px ${theme.fontFamily}`;
-    ctx.fillText(`From ${senderName} 💚`, w / 2, 275);
+    ctx.fillStyle = theme.textColor;
+    ctx.font = `26px ${theme.fontFamily}`;
+    ctx.fillText(`From ${senderName} 💚`, w / 2, 285);
 
-    // Eid message if present
+    // Eid message with wrapping
+    let nextY = 325;
     if (eidMessage) {
-      ctx.fillStyle = theme.textColor;
       ctx.globalAlpha = 0.6;
       ctx.font = `italic 20px ${theme.fontFamily}`;
-      ctx.fillText(`"${eidMessage}"`, w / 2, 315);
+      nextY = wrapText(`"${eidMessage}"`, w / 2, 325, w - 120, 26) + 40;
+    } else {
+      nextY = 325;
     }
 
-    // Amount card (white rounded rect)
-    const cardY = eidMessage ? 360 : 330;
+    // Amount card
+    const cardY = nextY;
     const cardH = 180;
+    ctx.globalAlpha = 1;
     ctx.fillStyle = theme.cardBg;
-    ctx.shadowColor = 'rgba(0,0,0,0.2)';
-    ctx.shadowBlur = 25;
-    ctx.shadowOffsetY = 8;
+    ctx.shadowColor = 'rgba(0,0,0,0.15)';
+    ctx.shadowBlur = 30;
+    ctx.shadowOffsetY = 10;
     ctx.beginPath();
-    ctx.roundRect(60, cardY, w - 120, cardH, 28);
+    ctx.roundRect(60, cardY, w - 120, cardH, 32);
     ctx.fill();
     ctx.shadowColor = 'transparent';
 
     // Amount text
     if (amount !== '0') {
       ctx.fillStyle = '#111111';
-      ctx.font = `bold 48px ${theme.fontFamily}`;
+      ctx.font = `bold 50px ${theme.fontFamily}`;
       ctx.fillText(`You got ${amount} ৳!`, w / 2, cardY + 75);
     }
 
-    // Message
+    // Segment Message with wrapping
     ctx.fillStyle = '#555555';
     ctx.font = `22px ${theme.fontFamily}`;
-    const wrapText = (text: string, x: number, y: number, maxWidth: number, lineHeight: number) => {
-      const words = text.split(' ');
-      let line = '';
-      for (let n = 0; n < words.length; n++) {
-        const testLine = line + words[n] + ' ';
-        const metrics = ctx.measureText(testLine);
-        const testWidth = metrics.width;
-        if (testWidth > maxWidth && n > 0) {
-          ctx.fillText(line, x, y);
-          line = words[n] + ' ';
-          y += lineHeight;
-        } else {
-          line = testLine;
-        }
-      }
-      ctx.fillText(line, x, y);
-    };
-    wrapText(message, w / 2, cardY + 120, w - 200, 28);
+    wrapText(message, w / 2, cardY + (amount !== '0' ? 125 : 95), w - 200, 30);
 
     // Branding
     ctx.fillStyle = theme.textColor;
