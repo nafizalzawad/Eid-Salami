@@ -8,12 +8,7 @@ import { getWheel, getVisitorId, getSpinResult, saveSpinResult, WheelData, Wheel
 import { getRandomTheme } from '@/lib/cardThemes';
 import { CheckCircle2, Smartphone } from 'lucide-react';
 
-const MOBILE_BANKING_APPS = [
-  { name: 'bKash', color: '#E2136E', icon: '📱' },
-  { name: 'Nagad', color: '#F6921E', icon: '📲' },
-  { name: 'Rocket', color: '#8B2F8B', icon: '🚀' },
-  { name: 'Upay', color: '#00A651', icon: '💳' },
-];
+const EID_COLORS = ['#E2136E', '#8B2F8B', '#00A651', '#FF9800', '#2196F3', '#9C27B0', '#F44336', '#4CAF50', '#FFEB3B', '#3F51B5'];
 
 export default function SpinPage({ fixedWheelId }: { fixedWheelId?: string }) {
   const { wheelId: paramsWheelId } = useParams<{ wheelId: string }>();
@@ -145,32 +140,10 @@ export default function SpinPage({ fixedWheelId }: { fixedWheelId?: string }) {
             />
           </div>
 
-          {/* Payment Section */}
-          {result.amount !== '0' && showPaymentInfo && (
-            <div className="w-full max-w-sm mt-5 animate-slide-up" style={{ animationDelay: '0.4s' }}>
-              <div className="card-festive space-y-3">
-                <div className="flex items-center gap-2 text-foreground font-display font-bold text-base">
-                  <CheckCircle2 size={20} className="text-primary" />
-                  Card shared! Now ask {wheel.senderName} to send via:
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  {MOBILE_BANKING_APPS.map(app => (
-                    <div
-                      key={app.name}
-                      className="rounded-xl p-3 text-center font-semibold text-sm border border-border hover:scale-105 transition-transform cursor-pointer"
-                      style={{ backgroundColor: app.color + '15', borderColor: app.color + '30' }}
-                    >
-                      <span className="text-lg">{app.icon}</span>
-                      <p className="text-foreground mt-1">{app.name}</p>
-                    </div>
-                  ))}
-                </div>
-                <p className="text-xs text-muted-foreground text-center">
-                  Show this card to {wheel.senderName} — they'll verify and send {result.amount} ৳ via mobile banking 💚
-                </p>
-              </div>
-            </div>
-          )}
+          <div className="animate-slide-up mt-8 text-center text-primary-foreground/70 text-sm max-w-xs px-4" style={{ animationDelay: '0.4s' }}>
+            <p className="font-semibold mb-2">🎉 Card ready!</p>
+            <p>Download your card and post it in the comments of Nafiz's Facebook post to claim your Eidi! 🌙</p>
+          </div>
         </div>
       </EidBackground>
     );

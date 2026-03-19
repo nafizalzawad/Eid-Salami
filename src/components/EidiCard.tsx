@@ -283,31 +283,22 @@ const EidiCard = forwardRef<EidiCardHandle, EidiCardProps>(({ amount, message, s
       </div>
 
       <div className="flex flex-col gap-3 mt-6">
-        {/* In claim mode, we prioritize the "Send to Claim" button */}
-        {isClaimMode ? (
+        {/* In claim mode, we prioritize the Download button for FB sharing */}
+        <div className="flex gap-3">
+          <button
+            onClick={downloadCard}
+            className="btn-gold flex-1 flex items-center justify-center gap-3 text-lg py-4 shadow-lg hover:shadow-xl transition-all active:scale-95 animate-bounce-in"
+            style={{ backgroundColor: theme.accentColor, color: theme.bgGradient[0].length > 7 ? '#fff' : theme.bgGradient[2] }}
+          >
+            <Download size={24} /> Download Eidi Card 🎁
+          </button>
           <button
             onClick={shareCard}
-            className="w-full flex items-center justify-center gap-2 bg-[#2d8a4e] text-white font-bold rounded-2xl px-8 py-4 text-lg shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-95 shadow-festive"
+            className="bg-white/10 backdrop-blur-md text-white border border-white/20 font-semibold rounded-2xl px-5 py-4 transition-all hover:bg-white/20 active:scale-95 shadow-lg"
           >
-            <Smartphone size={20} /> Send Card to {senderName} to Claim
+            <Share2 size={24} />
           </button>
-        ) : (
-          <div className="flex gap-3">
-            <button
-              onClick={downloadCard}
-              className="btn-gold flex-1 flex items-center justify-center gap-2 text-base py-4 shadow-lg hover:shadow-xl transition-all active:scale-95"
-              style={{ backgroundColor: theme.accentColor, color: theme.bgGradient[0].length > 7 ? '#fff' : theme.bgGradient[2] }}
-            >
-              <Download size={20} /> Download Card
-            </button>
-            <button
-              onClick={shareCard}
-              className="bg-white/10 backdrop-blur-md text-white border border-white/20 font-semibold rounded-2xl px-5 py-4 transition-all hover:bg-white/20 active:scale-95 shadow-lg"
-            >
-              <Share2 size={20} />
-            </button>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );
