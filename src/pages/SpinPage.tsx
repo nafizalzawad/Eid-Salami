@@ -110,25 +110,9 @@ export default function SpinPage({ fixedWheelId }: { fixedWheelId?: string }) {
             senderName={wheel.senderName}
             eidMessage={wheel.eidMessage}
             themeId={themeId}
+            isClaimMode={true}
+            onShareComplete={() => setShowPaymentInfo(true)}
           />
-
-          <div className="mt-4 space-y-3 w-full max-w-sm">
-            <button
-              onClick={() => shareCardToSender(previousResult)}
-              className="btn-festive w-full flex items-center justify-center gap-2 text-base"
-            >
-              <Smartphone size={18} /> Send to {wheel.senderName} to Claim
-            </button>
-
-            {wheelId === 'nafiz-salami' && (
-              <button
-                onClick={() => navigate('/share/nafiz-salami')}
-                className="text-primary-foreground/20 hover:text-primary-foreground/40 text-[10px] transition-colors w-full text-center mt-12"
-              >
-                Owner Dashboard
-              </button>
-            )}
-          </div>
         </div>
       </EidBackground>
     );
@@ -156,55 +140,36 @@ export default function SpinPage({ fixedWheelId }: { fixedWheelId?: string }) {
               senderName={wheel.senderName}
               eidMessage={wheel.eidMessage}
               themeId={themeId}
+              isClaimMode={true}
+              onShareComplete={() => setShowPaymentInfo(true)}
             />
           </div>
 
-          {/* Claim & Payment Section */}
-          {result.amount !== '0' && (
+          {/* Payment Section */}
+          {result.amount !== '0' && showPaymentInfo && (
             <div className="w-full max-w-sm mt-5 animate-slide-up" style={{ animationDelay: '0.4s' }}>
-              {!showPaymentInfo ? (
-                <button
-                  onClick={() => {
-                    shareCardToSender(result);
-                    setShowPaymentInfo(true);
-                  }}
-                  className="btn-festive w-full flex items-center justify-center gap-2 text-base"
-                >
-                  <Smartphone size={18} /> Send Card to {wheel.senderName} to Claim
-                </button>
-              ) : (
-                <div className="card-festive space-y-3">
-                  <div className="flex items-center gap-2 text-foreground font-display font-bold text-base">
-                    <CheckCircle2 size={20} className="text-primary" />
-                    Card shared! Now ask {wheel.senderName} to send via:
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    {MOBILE_BANKING_APPS.map(app => (
-                      <div
-                        key={app.name}
-                        className="rounded-xl p-3 text-center font-semibold text-sm border border-border hover:scale-105 transition-transform cursor-pointer"
-                        style={{ backgroundColor: app.color + '15', borderColor: app.color + '30' }}
-                      >
-                        <span className="text-lg">{app.icon}</span>
-                        <p className="text-foreground mt-1">{app.name}</p>
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-xs text-muted-foreground text-center">
-                    Show this card to {wheel.senderName} — they'll verify and send {result.amount} ৳ via mobile banking 💚
-                  </p>
+              <div className="card-festive space-y-3">
+                <div className="flex items-center gap-2 text-foreground font-display font-bold text-base">
+                  <CheckCircle2 size={20} className="text-primary" />
+                  Card shared! Now ask {wheel.senderName} to send via:
                 </div>
-              )}
+                <div className="grid grid-cols-2 gap-2">
+                  {MOBILE_BANKING_APPS.map(app => (
+                    <div
+                      key={app.name}
+                      className="rounded-xl p-3 text-center font-semibold text-sm border border-border hover:scale-105 transition-transform cursor-pointer"
+                      style={{ backgroundColor: app.color + '15', borderColor: app.color + '30' }}
+                    >
+                      <span className="text-lg">{app.icon}</span>
+                      <p className="text-foreground mt-1">{app.name}</p>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground text-center">
+                  Show this card to {wheel.senderName} — they'll verify and send {result.amount} ৳ via mobile banking 💚
+                </p>
+              </div>
             </div>
-          )}
-
-          {wheelId === 'nafiz-salami' && (
-            <button
-              onClick={() => navigate('/share/nafiz-salami')}
-              className="text-primary-foreground/20 hover:text-primary-foreground/40 text-[10px] transition-colors w-full text-center mt-12"
-            >
-              Owner Dashboard
-            </button>
           )}
         </div>
       </EidBackground>

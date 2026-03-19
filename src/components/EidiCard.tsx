@@ -1,5 +1,5 @@
-import { useRef, useCallback, useMemo } from 'react';
-import { Download, Share2 } from 'lucide-react';
+import { useRef, useCallback, useMemo, forwardRef, useImperativeHandle } from 'react';
+import { Download, Share2, Smartphone } from 'lucide-react';
 import { getThemeById } from '@/lib/cardThemes';
 
 interface EidiCardProps {
@@ -8,9 +8,15 @@ interface EidiCardProps {
   senderName: string;
   eidMessage?: string;
   themeId?: string;
+  isClaimMode?: boolean;
+  onShareComplete?: () => void;
 }
 
-export default function EidiCard({ amount, message, senderName, eidMessage, themeId }: EidiCardProps) {
+export interface EidiCardHandle {
+  share: () => Promise<void>;
+}
+
+const EidiCard = forwardRef<EidiCardHandle, EidiCardProps>(({ amount, message, senderName, eidMessage, themeId, isClaimMode, onShareComplete }, ref) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const theme = useMemo(() => getThemeById(themeId || 'islamic-emerald'), [themeId]);
 
@@ -53,9 +59,8 @@ export default function EidiCard({ amount, message, senderName, eidMessage, them
       }
     }
     ctx.restore();
-  };
-
-  const downloadCard = useCallback(async () => {
+  }
+  const generateCardBlob = useCallback(async (): Promise<Blob> => {
     const canvas = document.createElement('canvas');
     const w = 600;
     const h = 800;
@@ -165,21 +170,54 @@ export default function EidiCard({ amount, message, senderName, eidMessage, them
     ctx.roundRect(10, 10, w - 20, h - 20, 25);
     ctx.stroke();
 
-    // Download
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => resolve(blob!), 'image/png');
+    });
+  }, [amount, message, senderName, eidMessage, theme, drawPattern]);
+
+  const downloadCard = useCallback(async () => {
+    const blob = await generateCardBlob();
     const link = document.createElement('a');
     link.download = `eidi-card-${senderName}.png`;
-    link.href = canvas.toDataURL('image/png');
+    link.href = URL.createObjectURL(blob);
     link.click();
-  }, [amount, message, senderName, eidMessage, theme]);
+    URL.revokeObjectURL(link.href);
+  }, [senderName, generateCardBlob]);
 
   const shareCard = useCallback(async () => {
     const text = `Eid Mubarak! 🎉\n${senderName} sent me ${amount !== '0' ? amount + ' ৳' : 'a special message'} as Eidi!\n${message}`;
-    if (navigator.share) {
-      await navigator.share({ title: 'My Eidi Card 🎁', text });
-    } else {
+    
+    try {
+      if (navigator.share) {
+        const blob = await generateCardBlob();
+        const file = new File([blob], `eidi-card-${senderName}.png`, { type: 'image/png' });
+        
+        // Check if file sharing is supported
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: 'My Eidi Card 🎁',
+            text: text,
+          });
+        } else {
+          // Fallback to text share
+          await navigator.share({ title: 'My Eidi Card 🎁', text });
+        }
+        onShareComplete?.();
+      } else {
+        await navigator.clipboard.writeText(text);
+        onShareComplete?.();
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
+      // Final fallback to clipboard
       await navigator.clipboard.writeText(text);
     }
-  }, [amount, message, senderName]);
+  }, [amount, message, senderName, generateCardBlob]);
+
+  useImperativeHandle(ref, () => ({
+    share: shareCard
+  }));
 
   return (
     <div className="w-full max-w-sm group">
@@ -244,21 +282,76 @@ export default function EidiCard({ amount, message, senderName, eidMessage, them
         </div>
       </div>
 
-      <div className="flex gap-3 mt-6">
-        <button
-          onClick={downloadCard}
-          className="btn-gold flex-1 flex items-center justify-center gap-2 text-base py-4 shadow-lg hover:shadow-xl transition-all active:scale-95"
-          style={{ backgroundColor: theme.accentColor, color: theme.bgGradient[0].length > 7 ? '#fff' : theme.bgGradient[2] }}
-        >
-          <Download size={20} /> Download Card
-        </button>
-        <button
-          onClick={shareCard}
-          className="bg-white/10 backdrop-blur-md text-white border border-white/20 font-semibold rounded-2xl px-5 py-4 transition-all hover:bg-white/20 active:scale-95 shadow-lg"
-        >
-          <Share2 size={20} />
-        </button>
+      <div className="flex flex-col gap-3 mt-6">
+        {/* In claim mode, we prioritize the "Send to Claim" button */}
+        {isClaimMode ? (
+          <button
+            onClick={shareCard}
+            className="w-full flex items-center justify-center gap-2 bg-[#2d8a4e] text-white font-bold rounded-2xl px-8 py-4 text-lg shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-95 shadow-festive"
+          >
+            <Smartphone size={20} /> Send Card to {senderName} to Claim
+          </button>
+        ) : (
+          <div className="flex gap-3">
+            <button
+              onClick={downloadCard}
+              className="btn-gold flex-1 flex items-center justify-center gap-2 text-base py-4 shadow-lg hover:shadow-xl transition-all active:scale-95"
+              style={{ backgroundColor: theme.accentColor, color: theme.bgGradient[0].length > 7 ? '#fff' : theme.bgGradient[2] }}
+            >
+              <Download size={20} /> Download Card
+            </button>
+            <button
+              onClick={shareCard}
+              className="bg-white/10 backdrop-blur-md text-white border border-white/20 font-semibold rounded-2xl px-5 py-4 transition-all hover:bg-white/20 active:scale-95 shadow-lg"
+            >
+              <Share2 size={20} />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
-}
+});
+
+const drawPattern = (ctx: CanvasRenderingContext2D, w: number, h: number, patternType: string, accentColor: string) => {
+  ctx.save();
+  ctx.globalAlpha = 0.15;
+  ctx.fillStyle = accentColor;
+
+  if (patternType === 'stars') {
+    for (let i = 0; i < 60; i++) {
+      const sx = Math.random() * w;
+      const sy = Math.random() * h;
+      const sr = 1 + Math.random() * 2;
+      ctx.beginPath();
+      ctx.arc(sx, sy, sr, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (patternType === 'lanterns') {
+    ctx.font = '30px serif';
+    for (let i = 0; i < 12; i++) {
+      ctx.fillText('🏮', Math.random() * w, Math.random() * h);
+    }
+  } else if (patternType === 'alpona') {
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = accentColor;
+    for (let i = 0; i < 5; i++) {
+      ctx.beginPath();
+      ctx.arc(w / 2, h / 2, 50 * (i + 1), 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  } else if (patternType === 'geometric') {
+    for (let i = 0; i < 20; i++) {
+      ctx.strokeRect(Math.random() * w, Math.random() * h, 40, 40);
+    }
+  } else if (patternType === 'confetti') {
+    const colors = ['#FFD700', '#FF4081', '#00E676', '#2979FF'];
+    for (let i = 0; i < 80; i++) {
+      ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
+      ctx.fillRect(Math.random() * w, Math.random() * h, 6, 6);
+    }
+  }
+  ctx.restore();
+};
+
+export default EidiCard;
