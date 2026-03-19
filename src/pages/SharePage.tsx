@@ -49,54 +49,49 @@ export default function SharePage() {
   return (
     <EidBackground>
       <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8">
-        <div className="animate-bounce-in">
-          <h1 className="font-display text-3xl font-bold text-center mb-2">
-            Your Eidi Wheel is Ready! 🎁
+        <div className="animate-bounce-in text-center">
+          <h1 className="font-display text-4xl font-bold mb-2">
+            Nafiz's Eidi Wheel 🎁
           </h1>
-          <p className="text-center text-primary-foreground/70 mb-6">
-            Share it with friends and family
+          <p className="text-primary-foreground/70 mb-6 text-lg">
+            Share this link with friends to send Eidi!
           </p>
         </div>
 
         <div className="mb-6 opacity-90 pointer-events-none animate-slide-up">
-          <SpinningWheel segments={wheel.segments} size={200} />
+          <SpinningWheel segments={wheel.segments} size={220} />
         </div>
 
-        <div className="w-full max-w-sm space-y-3 animate-slide-up" style={{ animationDelay: '0.2s' }}>
+        <div className="w-full max-w-sm space-y-4 animate-slide-up" style={{ animationDelay: '0.2s' }}>
           {/* Link copy */}
-          <div className="card-festive flex items-center gap-2">
+          <div className="card-festive flex items-center gap-3 p-4 bg-white/10 backdrop-blur-md">
             <input
               readOnly
               value={shareUrl}
-              className="flex-1 bg-transparent text-foreground text-sm truncate focus:outline-none font-body"
+              className="flex-1 bg-transparent text-foreground text-base truncate focus:outline-none font-bold"
             />
             <button onClick={copyLink} className="shrink-0 text-primary hover:text-primary/80 transition-colors">
-              {copied ? <Check size={20} /> : <Copy size={20} />}
+              {copied ? <Check size={24} /> : <Copy size={24} />}
             </button>
           </div>
 
           {/* Share buttons */}
-          <button onClick={shareWhatsApp} className="btn-festive w-full flex items-center justify-center gap-2">
-            <MessageCircle size={20} /> Share on WhatsApp
+          <button onClick={shareWhatsApp} className="btn-festive w-full flex items-center justify-center gap-3 py-4 text-xl">
+            <MessageCircle size={24} /> Send via WhatsApp
           </button>
 
-          <button onClick={shareNative} className="bg-primary-foreground/10 backdrop-blur-sm text-primary-foreground font-semibold rounded-2xl px-8 py-3 text-base transition-all hover:bg-primary-foreground/20 w-full flex items-center justify-center gap-2">
-            <Share2 size={18} /> More Sharing Options
+          <button onClick={shareNative} className="bg-primary-foreground/10 backdrop-blur-md text-primary-foreground font-semibold rounded-2xl px-8 py-4 text-lg transition-all hover:bg-primary-foreground/20 w-full flex items-center justify-center gap-2 border border-white/20">
+            <Share2 size={20} /> Copy Share Link
           </button>
 
-          <button
-            onClick={() => navigate(`/verify/${wheel.id}`)}
-            className="bg-primary-foreground/10 backdrop-blur-sm text-primary-foreground font-semibold rounded-2xl px-8 py-3 text-base transition-all hover:bg-primary-foreground/20 w-full flex items-center justify-center gap-2"
-          >
-            📋 View Claims & Verify
-          </button>
-
-          <button
-            onClick={() => navigate('/create')}
-            className="text-center w-full text-sm text-primary-foreground/50 hover:text-primary-foreground/70 transition-colors mt-4"
-          >
-            Create Another Wheel ✨
-          </button>
+          <div className="pt-6 border-t border-white/10">
+            <button
+              onClick={() => navigate(`/verify/${wheel.id}`)}
+              className="btn-gold w-full flex items-center justify-center gap-2 py-4"
+            >
+              📋 View Your Eidi Claims
+            </button>
+          </div>
         </div>
       </div>
     </EidBackground>

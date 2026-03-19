@@ -15,8 +15,9 @@ const MOBILE_BANKING_APPS = [
   { name: 'Upay', color: '#00A651', icon: '💳' },
 ];
 
-export default function SpinPage() {
-  const { wheelId } = useParams<{ wheelId: string }>();
+export default function SpinPage({ fixedWheelId }: { fixedWheelId?: string }) {
+  const { wheelId: paramsWheelId } = useParams<{ wheelId: string }>();
+  const wheelId = paramsWheelId || fixedWheelId;
   const navigate = useNavigate();
   const [wheel, setWheel] = useState<WheelData | null>(null);
   const [spinning, setSpinning] = useState(false);
@@ -119,12 +120,14 @@ export default function SpinPage() {
               <Smartphone size={18} /> Send to {wheel.senderName} to Claim
             </button>
 
-            <button
-              onClick={() => navigate('/create')}
-              className="text-primary-foreground/50 hover:text-primary-foreground/70 text-sm transition-colors w-full text-center"
-            >
-              ✨ Create Your Own Eidi Wheel
-            </button>
+            {wheelId === 'nafiz-salami' && (
+              <button
+                onClick={() => navigate('/share/nafiz-salami')}
+                className="text-primary-foreground/20 hover:text-primary-foreground/40 text-[10px] transition-colors w-full text-center mt-12"
+              >
+                Owner Dashboard
+              </button>
+            )}
           </div>
         </div>
       </EidBackground>
@@ -195,12 +198,14 @@ export default function SpinPage() {
             </div>
           )}
 
-          <button
-            onClick={() => navigate('/create')}
-            className="btn-gold mt-5"
-          >
-            😄 Send Eidi Back
-          </button>
+          {wheelId === 'nafiz-salami' && (
+            <button
+              onClick={() => navigate('/share/nafiz-salami')}
+              className="text-primary-foreground/20 hover:text-primary-foreground/40 text-[10px] transition-colors w-full text-center mt-12"
+            >
+              Owner Dashboard
+            </button>
+          )}
         </div>
       </EidBackground>
     );

@@ -53,31 +53,39 @@ export function shuffleColors(): string[] {
   return [...EID_COLORS].sort(() => Math.random() - 0.5);
 }
 
+export const NAFIZ_WHEEL: WheelData = {
+  id: 'nafiz-salami',
+  senderName: 'Nafiz Al Zawad',
+  eidMessage: 'May this Eid bring you endless joy and happiness. Here is a small token of my love! 💚🌙',
+  createdAt: 1712707200000, // Fixed timestamp
+  segments: [
+    { id: 'seg-1', amount: '0.00', message: 'Try next year 😅', color: EID_COLORS[0] },
+    { id: 'seg-2', amount: '0.50', message: 'A tiny treat 🙂', color: EID_COLORS[1] },
+    { id: 'seg-3', amount: '1.00', message: 'Sweet Eidi 🍬', color: EID_COLORS[2] },
+    { id: 'seg-4', amount: '1.75', message: 'Lucky you 🍀', color: EID_COLORS[3] },
+    { id: 'seg-5', amount: '2.50', message: 'A little treat 😊', color: EID_COLORS[4] },
+    { id: 'seg-6', amount: '3.50', message: 'Getting better 👀', color: EID_COLORS[5] },
+    { id: 'seg-7', amount: '4.50', message: 'Nice one 😎', color: EID_COLORS[6] },
+    { id: 'seg-8', amount: '6.00', message: 'Big smile 😄', color: EID_COLORS[7] },
+    { id: 'seg-9', amount: '7.50', message: 'Double Eidi! 🎉', color: EID_COLORS[8] },
+    { id: 'seg-10', amount: '9.75', message: 'Jackpot! 🌟', color: EID_COLORS[9] },
+  ]
+};
+
 export function createDefaultSegments(): WheelSegment[] {
-  const defaults = [
-    { amount: '50', message: 'Eidi Mubarak! 💚' },
-    { amount: '100', message: 'Double Eidi! 🎉' },
-    { amount: '20', message: 'A little treat 😊' },
-    { amount: '200', message: 'Jackpot! 🌟' },
-    { amount: '0', message: 'Try next year 😄' },
-    { amount: '75', message: 'Sweet Eidi! 🍬' },
-  ];
-  const colors = getRandomColors(defaults.length);
-  return defaults.map((d, i) => ({
-    id: uuidv4(),
-    amount: d.amount,
-    message: d.message,
-    color: colors[i],
-  }));
+  return NAFIZ_WHEEL.segments;
 }
 
 export function saveWheel(wheel: WheelData): void {
+  // Don't allowing overriding if we want to stick to Nafiz
+  if (wheel.id === NAFIZ_WHEEL.id) return;
   const wheels = getAllWheels();
   wheels[wheel.id] = wheel;
   localStorage.setItem(WHEELS_KEY, JSON.stringify(wheels));
 }
 
 export function getWheel(id: string): WheelData | null {
+  if (id === NAFIZ_WHEEL.id || id === 'nafiz') return NAFIZ_WHEEL;
   const wheels = getAllWheels();
   return wheels[id] || null;
 }
@@ -119,6 +127,9 @@ function getAllResults(): SpinResult[] {
 }
 
 export function getShareUrl(wheelId: string): string {
+  if (wheelId === NAFIZ_WHEEL.id || wheelId === 'nafiz-salami') {
+    return window.location.origin;
+  }
   return `${window.location.origin}/spin/${wheelId}`;
 }
 
