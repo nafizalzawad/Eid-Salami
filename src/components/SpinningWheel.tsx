@@ -16,6 +16,7 @@ export default function SpinningWheel({ segments, onSpinEnd, spinning = false, t
   const spinStartRef = useRef(0);
   const targetRotationRef = useRef(0);
   const isSpinningRef = useRef(false);
+  const [isTicking, setIsTicking] = useState(false);
 
   const drawWheel = useCallback((rot: number) => {
     const canvas = canvasRef.current;
@@ -92,16 +93,23 @@ export default function SpinningWheel({ segments, onSpinEnd, spinning = false, t
     ctx.fillText('🌙', cx, cy);
 
     // Pointer (top)
+    ctx.save();
+    ctx.translate(cx, 16);
+    // Add small tick animation rotation if ticking
+    if (isTicking) {
+      ctx.rotate(-0.1);
+    }
     ctx.beginPath();
-    ctx.moveTo(cx - 12, 4);
-    ctx.lineTo(cx + 12, 4);
-    ctx.lineTo(cx, 28);
+    ctx.moveTo(-14, -12);
+    ctx.lineTo(14, -12);
+    ctx.lineTo(0, 16);
     ctx.closePath();
-    ctx.fillStyle = 'hsl(0, 80%, 55%)';
+    ctx.fillStyle = '#ef4444'; // Bright red
     ctx.fill();
-    ctx.strokeStyle = 'hsl(0, 70%, 40%)';
+    ctx.strokeStyle = '#991b1b';
     ctx.lineWidth = 2;
     ctx.stroke();
+    ctx.restore();
   }, [segments, size]);
 
   useEffect(() => {
@@ -115,39 +123,57 @@ export default function SpinningWheel({ segments, onSpinEnd, spinning = false, t
     const segCount = segments.length;
     const arc = (2 * Math.PI) / segCount;
     
-    // Target: pointer is at top (3π/2 from positive x). We want segment targetIndex center under pointer.
-    const extraSpins = 6 + Math.random() * 2;
-    // Calculation: rot = PointerPos - (targetIndex * arc + arc/2)
-    const stopRotation = (3 * Math.PI / 2) - (targetIndex * arc + arc / 2);
-    const totalRotation = extraSpins * 2 * Math.PI + stopRotation;
+    // Current rotation normalized to 0-2PI
+    const currentBaseRot = rotation % (2 * Math.PI);
     
-    targetRotationRef.current = totalRotation;
-    spinStartRef.current = performance.now();
-    const duration = 5000; // Fixed duration for more predictable feel
+    // We want: (targetIndex * arc + arc/2 + rotation) % 2PI = 3PI/2 (Pointer at top)
+    // So: Rotation_needed = (1.5*PI - (targetIndex * arc + arc/2) - currentRotation)
+    let stopRotation = (1.5 * Math.PI) - (targetIndex * arc + arc / 2);
+    
+    // Make sure we spin forward at least several times
+    let relativeRotation = (stopRotation - currentBaseRot);
+    while (relativeRotation < 0) relativeRotation += 2 * Math.PI;
+    
+    const extraSpins = 6 + Math.random() * 2;
+    const totalNewRotation = extraSpins * 2 * Math.PI + relativeRotation;
+    
+    const startTimeSource = performance.now();
+    const startRotation = rotation;
+    const duration = 5000;
+
+    let lastTickAngle = -1;
 
     const animate = (now: number) => {
-      const elapsed = now - spinStartRef.current;
+      const elapsed = now - startTimeSource;
       const progress = Math.min(elapsed / duration, 1);
       
-      // Ease out cubic
-      const eased = 1 - Math.pow(1 - progress, 3);
-      const currentRot = eased * targetRotationRef.current;
+      // Power 4 ease out for high-speed start and slow end
+      const eased = 1 - Math.pow(1 - progress, 4);
+      const currentRot = startRotation + (eased * totalNewRotation);
       
+      // Visual tick effect when passing a segment boundary
+      const normalizedRot = currentRot % (2 * Math.PI);
+      const currentTickAngle = Math.floor(normalizedRot / arc);
+      if (currentTickAngle !== lastTickAngle) {
+        setIsTicking(true);
+        setTimeout(() => setIsTicking(false), 50);
+        lastTickAngle = currentTickAngle;
+      }
+
       setRotation(currentRot);
       drawWheel(currentRot);
 
       if (progress < 1) {
         animRef.current = requestAnimationFrame(animate);
       } else {
-        // Final frame at exact rotation
-        setRotation(targetRotationRef.current);
-        drawWheel(targetRotationRef.current);
+        const finalRot = startRotation + totalNewRotation;
+        setRotation(finalRot);
+        drawWheel(finalRot);
         
-        // Add a small delay so the user sees the winning segment clearly before the switch
         setTimeout(() => {
           isSpinningRef.current = false;
           onSpinEnd?.(targetIndex);
-        }, 800);
+        }, 1200); // Wait longer for the excitement to build
       }
     };
 
