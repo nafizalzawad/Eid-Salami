@@ -117,7 +117,7 @@ export default function SpinningWheel({ segments, onSpinEnd, spinning = false, s
     
     // Target: pointer is at top (3π/2 from positive x). We want segment targetIndex under pointer.
     const extraSpins = 5 + Math.random() * 3;
-    const targetAngle = extraSpins * 2 * Math.PI + (2 * Math.PI - (targetIndex * arc + arc / 2)) + Math.PI / 2;
+    const targetAngle = extraSpins * 2 * Math.PI + (3 * Math.PI / 2 - (targetIndex * arc + arc / 2));
     
     targetRotationRef.current = targetAngle;
     spinStartRef.current = performance.now();

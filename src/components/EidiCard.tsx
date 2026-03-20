@@ -2,6 +2,47 @@ import { useRef, useCallback, useMemo, forwardRef, useImperativeHandle } from 'r
 import { Download, Share2, Smartphone } from 'lucide-react';
 import { getThemeById } from '@/lib/cardThemes';
 
+const drawPattern = (ctx: CanvasRenderingContext2D, w: number, h: number, patternType: string, accentColor: string) => {
+  ctx.save();
+  ctx.globalAlpha = 0.15;
+  ctx.fillStyle = accentColor;
+
+  if (patternType === 'stars') {
+    for (let i = 0; i < 60; i++) {
+      const sx = Math.random() * w;
+      const sy = Math.random() * h;
+      const sr = 1 + Math.random() * 2;
+      ctx.beginPath();
+      ctx.arc(sx, sy, sr, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (patternType === 'lanterns') {
+    ctx.font = '30px serif';
+    for (let i = 0; i < 12; i++) {
+      ctx.fillText('🏮', Math.random() * w, Math.random() * h);
+    }
+  } else if (patternType === 'alpona') {
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = accentColor;
+    for (let i = 0; i < 5; i++) {
+      ctx.beginPath();
+      ctx.arc(w / 2, h / 2, 50 * (i + 1), 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  } else if (patternType === 'geometric') {
+    for (let i = 0; i < 20; i++) {
+      ctx.strokeRect(Math.random() * w, Math.random() * h, 40, 40);
+    }
+  } else if (patternType === 'confetti') {
+    const colors = ['#FFD700', '#FF4081', '#00E676', '#2979FF'];
+    for (let i = 0; i < 80; i++) {
+      ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
+      ctx.fillRect(Math.random() * w, Math.random() * h, 6, 6);
+    }
+  }
+  ctx.restore();
+};
+
 interface EidiCardProps {
   amount: string;
   message: string;
@@ -20,46 +61,24 @@ const EidiCard = forwardRef<EidiCardHandle, EidiCardProps>(({ amount, message, s
   const cardRef = useRef<HTMLDivElement>(null);
   const theme = useMemo(() => getThemeById(themeId || 'islamic-emerald'), [themeId]);
 
-  const drawPattern = (ctx: CanvasRenderingContext2D, w: number, h: number, patternType: string, accentColor: string) => {
-    ctx.save();
-    ctx.globalAlpha = 0.15;
-    ctx.fillStyle = accentColor;
-
-    if (patternType === 'stars') {
-      for (let i = 0; i < 60; i++) {
-        const sx = Math.random() * w;
-        const sy = Math.random() * h;
-        const sr = 1 + Math.random() * 2;
-        ctx.beginPath();
-        ctx.arc(sx, sy, sr, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    } else if (patternType === 'lanterns') {
-      ctx.font = '30px serif';
-      for (let i = 0; i < 12; i++) {
-        ctx.fillText('🏮', Math.random() * w, Math.random() * h);
-      }
-    } else if (patternType === 'alpona') {
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = accentColor;
-      for (let i = 0; i < 5; i++) {
-        ctx.beginPath();
-        ctx.arc(w / 2, h / 2, 50 * (i + 1), 0, Math.PI * 2);
-        ctx.stroke();
-      }
-    } else if (patternType === 'geometric') {
-      for (let i = 0; i < 20; i++) {
-        ctx.strokeRect(Math.random() * w, Math.random() * h, 40, 40);
-      }
-    } else if (patternType === 'confetti') {
-      const colors = ['#FFD700', '#FF4081', '#00E676', '#2979FF'];
-      for (let i = 0; i < 80; i++) {
-        ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
-        ctx.fillRect(Math.random() * w, Math.random() * h, 6, 6);
-      }
+  // Helper for drawing rounded rectangles with fallback for older browsers
+  const drawRoundRect = (ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) => {
+    if (ctx.roundRect) {
+      ctx.roundRect(x, y, w, h, r);
+    } else {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
     }
-    ctx.restore();
-  }
+  };
   const generateCardBlob = useCallback(async (): Promise<Blob> => {
     const canvas = document.createElement('canvas');
     const w = 600;
@@ -74,7 +93,7 @@ const EidiCard = forwardRef<EidiCardHandle, EidiCardProps>(({ amount, message, s
     bgGrad.addColorStop(0.5, theme.bgGradient[1]);
     bgGrad.addColorStop(1, theme.bgGradient[2]);
     ctx.fillStyle = bgGrad;
-    ctx.roundRect(0, 0, w, h, 32);
+    drawRoundRect(ctx, 0, 0, w, h, 32);
     ctx.fill();
 
     // Draw pattern
@@ -145,7 +164,7 @@ const EidiCard = forwardRef<EidiCardHandle, EidiCardProps>(({ amount, message, s
     ctx.shadowBlur = 30;
     ctx.shadowOffsetY = 10;
     ctx.beginPath();
-    ctx.roundRect(60, cardY, w - 120, cardH, 32);
+    drawRoundRect(ctx, 60, cardY, w - 120, cardH, 32);
     ctx.fill();
     ctx.shadowColor = 'transparent';
 
@@ -172,7 +191,7 @@ const EidiCard = forwardRef<EidiCardHandle, EidiCardProps>(({ amount, message, s
     ctx.globalAlpha = 0.3;
     ctx.lineWidth = 10;
     ctx.beginPath();
-    ctx.roundRect(10, 10, w - 20, h - 20, 25);
+    drawRoundRect(ctx, 10, 10, w - 20, h - 20, 25);
     ctx.stroke();
 
     return new Promise((resolve) => {
@@ -181,12 +200,29 @@ const EidiCard = forwardRef<EidiCardHandle, EidiCardProps>(({ amount, message, s
   }, [amount, message, senderName, eidMessage, theme, drawPattern]);
 
   const downloadCard = useCallback(async () => {
-    const blob = await generateCardBlob();
-    const link = document.createElement('a');
-    link.download = `eidi-card-${senderName}.png`;
-    link.href = URL.createObjectURL(blob);
-    link.click();
-    URL.revokeObjectURL(link.href);
+    try {
+      const blob = await generateCardBlob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `eidi-card-${senderName}.png`;
+      
+      // Better mobile compatibility: append to body before click
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Delay revocation for mobile browsers to process the download
+      setTimeout(() => URL.revokeObjectURL(url), 500);
+    } catch (err) {
+      console.error('Download failed:', err);
+      // Fallback: If blob download fails, try data URL as it's sometimes more reliable on mobile
+      try {
+        const canvas = document.createElement('canvas');
+        // Redraw manually or from blob if possible, but keep it simple
+        alert('Could not start automatic download. Please use the Share button or take a screenshot! 💚');
+      } catch (e) {}
+    }
   }, [senderName, generateCardBlob]);
 
   const shareCard = useCallback(async () => {
@@ -309,45 +345,5 @@ const EidiCard = forwardRef<EidiCardHandle, EidiCardProps>(({ amount, message, s
   );
 });
 
-const drawPattern = (ctx: CanvasRenderingContext2D, w: number, h: number, patternType: string, accentColor: string) => {
-  ctx.save();
-  ctx.globalAlpha = 0.15;
-  ctx.fillStyle = accentColor;
-
-  if (patternType === 'stars') {
-    for (let i = 0; i < 60; i++) {
-      const sx = Math.random() * w;
-      const sy = Math.random() * h;
-      const sr = 1 + Math.random() * 2;
-      ctx.beginPath();
-      ctx.arc(sx, sy, sr, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  } else if (patternType === 'lanterns') {
-    ctx.font = '30px serif';
-    for (let i = 0; i < 12; i++) {
-      ctx.fillText('🏮', Math.random() * w, Math.random() * h);
-    }
-  } else if (patternType === 'alpona') {
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = accentColor;
-    for (let i = 0; i < 5; i++) {
-      ctx.beginPath();
-      ctx.arc(w / 2, h / 2, 50 * (i + 1), 0, Math.PI * 2);
-      ctx.stroke();
-    }
-  } else if (patternType === 'geometric') {
-    for (let i = 0; i < 20; i++) {
-      ctx.strokeRect(Math.random() * w, Math.random() * h, 40, 40);
-    }
-  } else if (patternType === 'confetti') {
-    const colors = ['#FFD700', '#FF4081', '#00E676', '#2979FF'];
-    for (let i = 0; i < 80; i++) {
-      ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
-      ctx.fillRect(Math.random() * w, Math.random() * h, 6, 6);
-    }
-  }
-  ctx.restore();
-};
 
 export default EidiCard;
