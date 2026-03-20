@@ -21,6 +21,7 @@ export default function SpinPage({ fixedWheelId }: { fixedWheelId?: string }) {
   const [previousResult, setPreviousResult] = useState<WheelSegment | null>(null);
   const [themeId, setThemeId] = useState<string | undefined>(undefined);
   const [showPaymentInfo, setShowPaymentInfo] = useState(false);
+  const [targetIndex, setTargetIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (!wheelId) return;
@@ -69,7 +70,9 @@ export default function SpinPage({ fixedWheelId }: { fixedWheelId?: string }) {
   }, [wheel, wheelId]);
 
   const startSpin = () => {
-    if (spinning || result) return;
+    if (spinning || result || !wheel) return;
+    const idx = Math.floor(Math.random() * wheel.segments.length);
+    setTargetIndex(idx);
     setSpinning(true);
   };
 
@@ -169,6 +172,7 @@ export default function SpinPage({ fixedWheelId }: { fixedWheelId?: string }) {
           <SpinningWheel
             segments={wheel.segments}
             spinning={spinning}
+            targetIndex={targetIndex}
             onSpinEnd={handleSpinEnd}
             size={Math.min(320, window.innerWidth - 60)}
           />

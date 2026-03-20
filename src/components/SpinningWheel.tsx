@@ -5,10 +5,11 @@ interface SpinningWheelProps {
   segments: WheelSegment[];
   onSpinEnd?: (segmentIndex: number) => void;
   spinning?: boolean;
+  targetIndex?: number | null;
   size?: number;
 }
 
-export default function SpinningWheel({ segments, onSpinEnd, spinning = false, size = 320 }: SpinningWheelProps) {
+export default function SpinningWheel({ segments, onSpinEnd, spinning = false, targetIndex = null, size = 320 }: SpinningWheelProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [rotation, setRotation] = useState(0);
   const animRef = useRef<number>(0);
@@ -108,20 +109,21 @@ export default function SpinningWheel({ segments, onSpinEnd, spinning = false, s
   }, [drawWheel, rotation]);
 
   useEffect(() => {
-    if (!spinning || isSpinningRef.current) return;
+    if (!spinning || targetIndex === null || isSpinningRef.current) return;
     isSpinningRef.current = true;
 
     const segCount = segments.length;
-    const targetIndex = Math.floor(Math.random() * segCount);
     const arc = (2 * Math.PI) / segCount;
     
-    // Target: pointer is at top (3π/2 from positive x). We want segment targetIndex under pointer.
-    const extraSpins = 5 + Math.random() * 3;
-    const targetAngle = extraSpins * 2 * Math.PI + (3 * Math.PI / 2 - (targetIndex * arc + arc / 2));
+    // Target: pointer is at top (3π/2 from positive x). We want segment targetIndex center under pointer.
+    const extraSpins = 6 + Math.random() * 2;
+    // Calculation: rot = PointerPos - (targetIndex * arc + arc/2)
+    const stopRotation = (3 * Math.PI / 2) - (targetIndex * arc + arc / 2);
+    const totalRotation = extraSpins * 2 * Math.PI + stopRotation;
     
-    targetRotationRef.current = targetAngle;
+    targetRotationRef.current = totalRotation;
     spinStartRef.current = performance.now();
-    const duration = 4000 + Math.random() * 2000;
+    const duration = 5000; // Fixed duration for more predictable feel
 
     const animate = (now: number) => {
       const elapsed = now - spinStartRef.current;
@@ -137,8 +139,15 @@ export default function SpinningWheel({ segments, onSpinEnd, spinning = false, s
       if (progress < 1) {
         animRef.current = requestAnimationFrame(animate);
       } else {
-        isSpinningRef.current = false;
-        onSpinEnd?.(targetIndex);
+        // Final frame at exact rotation
+        setRotation(targetRotationRef.current);
+        drawWheel(targetRotationRef.current);
+        
+        // Add a small delay so the user sees the winning segment clearly before the switch
+        setTimeout(() => {
+          isSpinningRef.current = false;
+          onSpinEnd?.(targetIndex);
+        }, 800);
       }
     };
 
@@ -147,7 +156,7 @@ export default function SpinningWheel({ segments, onSpinEnd, spinning = false, s
     return () => {
       if (animRef.current) cancelAnimationFrame(animRef.current);
     };
-  }, [spinning, segments, onSpinEnd, drawWheel]);
+  }, [spinning, targetIndex, segments, onSpinEnd, drawWheel]);
 
   return (
     <div className="relative inline-flex items-center justify-center">
